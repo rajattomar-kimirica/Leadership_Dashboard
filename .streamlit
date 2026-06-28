@@ -1,1 +1,12 @@
-
+[gcp_service_account]
+  "type": "service_account",
+  "project_id": "aerobic-copilot-494105-b6",
+  "private_key_id": "36f3e68fd547bc2a7ffe55355d40c9ea3cd84e07",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDlISh4qputl3xv\nf7p5kmtvF+cYxjTUP0xmtuAy+qxcPN4CsJc1FeklEROsxVrtascgNuJN5e1sC4lR\nJxyr+X5cnCl/pwmk3WK47V5DuTyM8+OXxzeb3XoSUSv/BSRx3uQbTAsREgR4aifV\nMJ8b/a2F64GmFlzkS+eliTAy/tiqFdCeyHwMwpPmVbPVES93F7EJ/qtvd4nji7dT\nXIL3RYzO2ygJCp3CRDtNaYae/X0t5ugwc95iOb3ONe+RTHMToo4I4sxh4d5z6Iql\n44b0QZoFUyLospd6KnOGZz68u0aIjrYS5hewB0ceuW2fFeLSquaooxkyoa5kx7rS\n9elB5tBJAgMBAAECggEACw0rX46TDa9l0BbwDpcSWXxkqBw/RhF7hOTDMZJHp/dD\nmgucb3IMGb6WHVozhYoF6rba+Xjil7iCughR6LWS87KQidirrWkELvk797ZChmXp\nD1QLiZgIIEQMBDPiSx++Dtb/Haap0okEPNMoiXgV24S9bx5bAqPqm2Bfk8YY+zMU\nxpptYTP0CzD+xo5s168RUi3fGdL3E+DTKwdoQD22DQKb+y82paVE6NLcmjpB6axV\n1eeGGhowtcIgVBErMp9RRLO/w8p0+UGI6KcpcMG7TAzwP8QmhCYOZAGW8fx/7kTT\nRe4KHdpRNSzje3haS+jkZQguxPzsFh0N7Bc9COg/AQKBgQD9iegpFZj6vcLCmv/M\n4QKgbw4G0nf42u6Ustxjs3WkxVSU17iSiAoXSi3njSmy0rOJqE78m5tuk0VgiSCq\nA3U34HkCTI1vb5XvMnHc+/k5jHD1VK6Kt4jpdivjtTeUFKhmMZ7AuVEa1ayvPwV7\nJnM1B+0OMtm7amLBbwCUOLRAYQKBgQDnWpbzgwAILhP1Ec0Uqvv1X6RUn2wtmCF2\n3YSifgt9POYj7uU2AAEUstTQdukUJBwA+O4Nnr/Ft+p6SJixBuchMNWgVM5B2XB6\nZJ4eRhjqAX1TLhoOMZ4s15+fF8G9Z5wAxocSnpAF8Ee63R8VICz6mm2oGaQQ3ANN\nCc6HeqM46QKBgDQJeP/tsd9M0Ut12qinSg25nWxjCEKoVK1qZHeGHtA5vBlsiTJx\n/3g2PmO3Amb0fer0A3ovSeCRE30zx+N9IDLevJdvNNw5T9GvTdVoVgesvoZr4gMQ\nlmYsXee3ive2obWP26B8qJvUXUP+sFZNVvn8bXgrkaq4tBo1eS3y0XQhAoGBAJYe\nXQajgTjNlVuW8mivzg/YwIu8anhnV4eGk5LQkOnxwy+byxUwCYOByr99+R19lMI4\nxFcIJE3KWhaA1rs/zGfoBSYlATUPP4HbmhHw0Ce/Ua/QoU2GeqmEPGoCA0/AVCTY\nrTqysqd300N4SbvuheESpYbHJINgD7BEZcPZGuJJAoGAMiryl6fh6eHfA5G7T0cw\nfbkP82pQkoa4QywxSiVv54sv8RaQN+S2usNP98mWVmmjC2vBPwkp7t6Vlg23EH9F\nx8kbk+UFbmKS1dsotpVVRw5ZN7bj+iYkkcz5zAtfe9wviti7nW75jR0/rO6y+rLq\naW9R012zNnZnFoDAcPK8g6M=\n-----END PRIVATE KEY-----\n",
+  "client_email": "powerbi-bq-reader@aerobic-copilot-494105-b6.iam.gserviceaccount.com",
+  "client_id": "104137272925450917610",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/powerbi-bq-reader%40aerobic-copilot-494105-b6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
