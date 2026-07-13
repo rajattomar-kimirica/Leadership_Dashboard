@@ -1,5 +1,5 @@
 """
-SQL query builders for the Website vertical.
+SQL query builders for the Website and Online E-commerce verticals.
 Every function returns (sql_string, bq_params) ready to hand to
 utils.bigquery_client.run_query(). Keeping queries here (not inline in the
 Streamlit page) makes them independently testable and easy to reuse across
@@ -12,7 +12,7 @@ st.cache_data needs to correctly cache per date range (see bigquery_client.py
 for why this matters).
 """
 from config import ORDERS_TABLE, TARGETS_TABLE, GA4_TABLE, WEBSITE_ORDER_CHANNEL_VALUES, \
-    WEBSITE_TARGET_CHANNEL_NAME, REVENUE_COLUMN
+    WEBSITE_TARGET_CHANNEL_NAME, REVENUE_COLUMN, CHANNEL_SALES_TABLE
 
 
 def _channel_filter_clause(column: str = "order_channel") -> str:
@@ -149,3 +149,41 @@ def channel_distinct_values_sql():
     ORDER BY orders DESC
     """
     return sql, ()
+
+
+def channel_sales_revenue_sql(start_date, end_date, channels: list):
+    """
+    Secondary Sales revenue/quantity for a list of channel values (e.g. the
+    channels mapped to one Online E-commerce sub-vertical in
+    config.ONLINE_ECOMMERCE_CHANNEL_MAP), summed per day.
+
+    Source: Channel_Sales_Combined — Secondary Sales only for now; Primary
+    Sales will be added once that separate table exists.
+
+    Returns None if `channels` is empty (sub-vertical has no channels
+    mapped yet, e.g. Beauty Commerce / International E-Commerce) — callers
+    should handle that as "not available" rather than running an empty
+    IN (...) query.
+    """
+    if not channels:
+        return None
+
+    channel_params = [(f"channel_{i}", "STRING", ch) for i, ch in enumerate(channels)]
+    placeholders = ", ".join(f"@{name}" for name, _, _ in channel_params)
+
+    sql = f"""
+    SELECT
+        DATE(sales_date) AS sales_date,
+        SUM(revenue) AS revenue,
+        SUM(quantity) AS quantity
+    FROM `{CHANNEL_SALES_TABLE}`
+    WHERE DATE(sales_date) BETWEEN @start_date AND @end_date
+      AND channel IN ({placeholders})
+    GROUP BY sales_date
+    ORDER BY sales_date
+    """
+    params = (
+        ("start_date", "DATE", start_date),
+        ("end_date", "DATE", end_date),
+    ) + tuple(channel_params)
+    return sql, params
