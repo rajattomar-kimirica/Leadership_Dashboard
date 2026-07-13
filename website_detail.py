@@ -74,7 +74,10 @@ with st.sidebar:
     )
     st.caption("Leadership KPI Dashboard")
 
-    vertical = st.selectbox("Vertical", options=list(VERTICALS.keys()), index=0)
+    # This page is dedicated to the Website vertical (see the page nav in
+    # the sidebar for switching pages/verticals) — no need to also ask via
+    # a dropdown here, which was redundant now that routing handles it.
+    vertical = "Website"
 
     st.divider()
     st.subheader("Date range")
