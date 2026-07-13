@@ -18,13 +18,13 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Kimirica | Leadership Dashboard",
-    page_icon="📊",
+    page_icon="Kimirica",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 pg = st.navigation([
-    st.Page("website_detail.py", title="Website — Detail", icon="🌐", default=True),
-    st.Page("executive_summary.py", title="Executive Summary", icon="📈"),
+    st.Page("executive_summary.py", title="Executive Summary", icon="📈", default=True),
+    st.Page("website_detail.py", title="Website — Detail", icon="Kimirica.shop"),
 ])
 pg.run()
