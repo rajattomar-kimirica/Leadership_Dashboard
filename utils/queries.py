@@ -66,15 +66,18 @@ def orders_summary_sql(start_date, end_date):
 
 
 def targets_sql(start_date, end_date):
-    """Daily target/achievement rows for the Website channel."""
+    """
+    Daily target/achievement rows for the Website channel, from Overall_Sales
+    (sales_date, channel, revenue, daily_target, last_updated). Achievement %
+    is computed in Python (utils.kpi_calculations.targets_summary) from
+    revenue/daily_target, since this table doesn't store it directly.
+    """
     sql = f"""
     SELECT
         sales_date,
         channel,
         revenue,
-        monthly_target,
-        daily_target,
-        achievement_pct
+        daily_target
     FROM `{TARGETS_TABLE}`
     WHERE sales_date BETWEEN @start_date AND @end_date
       AND channel = @channel
