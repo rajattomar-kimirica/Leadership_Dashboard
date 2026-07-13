@@ -26,34 +26,9 @@ from utils.kpi_calculations import (
     summarize_orders, targets_summary, retention_rate,
     pct_change, cac, roas, tacos, conversion_rate, summarize_ga4,
 )
-from utils.ui_components import kpi_card, section_header
+from utils.ui_components import format_kpi_value, headline_achievement, compact_kpi_table
 from utils.ad_spend import load_daily_ad_spend, total_spend
 from utils.date_utils import mtd_window, same_period_last_year, fy_mtd_window, fy_label
-
-# Same metric card styling as the detail page — Streamlit pages don't share
-# <style> blocks with app.py automatically, so this is intentionally
-# duplicated rather than imported.
-st.markdown("""
-<style>
-    div[data-testid="stMetric"] {
-        background-color: #F8F9FB;
-        border: 1px solid #E6E8EC;
-        border-radius: 12px;
-        padding: 14px 16px 10px 16px;
-    }
-    div[data-testid="stMetricLabel"],
-    div[data-testid="stMetricLabel"] * {
-        font-weight: 600; opacity: 0.75; color: #1F2937 !important;
-    }
-    div[data-testid="stMetricValue"],
-    div[data-testid="stMetricValue"] * {
-        color: #111827 !important; font-size: 1.5rem !important;
-        white-space: normal !important; overflow-wrap: anywhere; line-height: 1.2 !important;
-    }
-    div[data-testid="stMetricDelta"],
-    div[data-testid="stMetricDelta"] * { font-size: 0.8rem !important; }
-</style>
-""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.image("assets/logo.png", width=110)
@@ -120,29 +95,19 @@ def render_vertical_block(vertical_name: str, meta: dict) -> None:
         return
 
     # -----------------------------------------------------------------
-    # Headline: FY-to-date target achievement
+    # Crisp headline: FY-to-date and MTD actual-vs-target, one line each
     # -----------------------------------------------------------------
     fy_tgt = targets_summary(data["fy_targets"])
-    section_header(f"{this_fy_label} Target Achievement (to date)")
-    fc1, fc2, fc3 = st.columns([1, 1, 2])
-    with fc1:
-        kpi_card(f"{this_fy_label} Revenue (Actual)", fy_tgt["actual_revenue"],
-                 prefix=CURRENCY_SYMBOL, compact=True)
-    with fc2:
-        kpi_card(f"{this_fy_label} Revenue Target", fy_tgt["target_revenue"],
-                 prefix=CURRENCY_SYMBOL, compact=True)
-    with fc3:
-        fy_achievement = fy_tgt["achievement_pct"]
-        st.metric(f"{this_fy_label} Target Achievement %", f"{fy_achievement:.1f}%")
-        st.progress(min(fy_achievement / 100, 1.0) if fy_achievement else 0)
+    headline_achievement(
+        f"{this_fy_label} Revenue — Achieved vs Target (to date)",
+        format_kpi_value(fy_tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        format_kpi_value(fy_tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        fy_tgt["achievement_pct"],
+    )
 
-    # -----------------------------------------------------------------
-    # MTD vs same period last year — all 12 headline metrics
-    # -----------------------------------------------------------------
     cur = summarize_orders(data["orders"])
     prev = summarize_orders(data["orders_ly"])
     tgt = targets_summary(data["targets"])
-    tgt_ly = targets_summary(data["targets_ly"])
     ret_pct = retention_rate(data["ret"])
     ret_pct_ly = retention_rate(data["ret_ly"])
     ga4_cur = summarize_ga4(data["ga4"])
@@ -159,52 +124,52 @@ def render_vertical_block(vertical_name: str, meta: dict) -> None:
     tacos_val = tacos(ad_spend_cur, cur["net_revenue"]) if ad_spend_cur else None
     tacos_val_ly = tacos(ad_spend_ly, prev["net_revenue"]) if ad_spend_ly else None
 
-    section_header("MTD vs Same Period Last Year", "Revenue & Growth")
-    r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-    with r1c1:
-        kpi_card("Revenue (Actual)", tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True,
-                 delta=pct_change(tgt["actual_revenue"], tgt_ly["actual_revenue"]))
-    with r1c2:
-        kpi_card("Revenue Target", tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True)
-    with r1c3:
-        achievement = tgt["achievement_pct"]
-        st.metric("Target Achievement % (MTD)", f"{achievement:.1f}%")
-        st.progress(min(achievement / 100, 1.0) if achievement else 0)
-    with r1c4:
-        growth = pct_change(cur["net_revenue"], prev["net_revenue"])
-        kpi_card("Growth % (YoY)", growth, suffix="%", decimals=1)
+    headline_achievement(
+        "MTD Revenue — Achieved vs Target",
+        format_kpi_value(tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        format_kpi_value(tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        tgt["achievement_pct"],
+    )
 
-    section_header("Acquisition & Conversion")
-    r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-    with r2c1:
-        kpi_card("Traffic (Sessions)", ga4_cur["sessions"] or None,
-                 delta=pct_change(ga4_cur["sessions"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None)
-    with r2c2:
-        kpi_card("Conversion %", conv_pct, suffix="%", decimals=2,
-                 delta=pct_change(conv_pct, conv_pct_ly) if conv_pct and conv_pct_ly else None)
-    with r2c3:
-        kpi_card("AOV", cur["aov"], prefix=CURRENCY_SYMBOL, decimals=0,
-                 delta=pct_change(cur["aov"], prev["aov"]))
-    with r2c4:
-        kpi_card("New Customers", cur["new_customers"],
-                 delta=pct_change(cur["new_customers"], prev["new_customers"]))
-
-    section_header("Retention & Efficiency")
-    r3c1, r3c2, r3c3, r3c4 = st.columns(4)
-    with r3c1:
-        kpi_card("Retention %", ret_pct, suffix="%", decimals=1,
-                 delta=pct_change(ret_pct, ret_pct_ly))
-    with r3c2:
-        kpi_card("CAC", cac_val, prefix=CURRENCY_SYMBOL, decimals=0,
-                 delta=pct_change(cac_val, cac_val_ly) if cac_val and cac_val_ly else None,
-                 delta_is_good_when_positive=False)
-    with r3c3:
-        kpi_card("ROAS", roas_val, suffix="x", decimals=2,
-                 delta=pct_change(roas_val, roas_val_ly) if roas_val and roas_val_ly else None)
-    with r3c4:
-        kpi_card("Overall TACOS", tacos_val, suffix="%", decimals=2,
-                 delta=pct_change(tacos_val, tacos_val_ly) if tacos_val and tacos_val_ly else None,
-                 delta_is_good_when_positive=False)
+    # -----------------------------------------------------------------
+    # Everything else: one crisp table, one row per metric, all vs LY
+    # -----------------------------------------------------------------
+    growth = pct_change(cur["net_revenue"], prev["net_revenue"])
+    rows = [
+        {"label": "Growth % (YoY)",
+         "value": format_kpi_value(growth, suffix="%", decimals=1),
+         "delta": None},
+        {"label": "Traffic (Sessions)",
+         "value": format_kpi_value(ga4_cur["sessions"] or None),
+         "delta": pct_change(ga4_cur["sessions"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None},
+        {"label": "Conversion %",
+         "value": format_kpi_value(conv_pct, suffix="%", decimals=2),
+         "delta": pct_change(conv_pct, conv_pct_ly) if conv_pct and conv_pct_ly else None},
+        {"label": "AOV",
+         "value": format_kpi_value(cur["aov"], prefix=CURRENCY_SYMBOL, decimals=0),
+         "delta": pct_change(cur["aov"], prev["aov"])},
+        {"label": "New Customers",
+         "value": format_kpi_value(cur["new_customers"]),
+         "delta": pct_change(cur["new_customers"], prev["new_customers"])},
+        {"label": "Retention %",
+         "value": format_kpi_value(ret_pct, suffix="%", decimals=1),
+         "delta": pct_change(ret_pct, ret_pct_ly)},
+        {"label": "CAC",
+         "value": format_kpi_value(cac_val, prefix=CURRENCY_SYMBOL, decimals=0),
+         "delta": pct_change(cac_val, cac_val_ly) if cac_val and cac_val_ly else None,
+         "delta_is_good_when_positive": False},
+        {"label": "ROAS",
+         "value": format_kpi_value(roas_val, suffix="x", decimals=2),
+         "delta": pct_change(roas_val, roas_val_ly) if roas_val and roas_val_ly else None},
+        {"label": "Overall TACOS",
+         "value": format_kpi_value(tacos_val, suffix="%", decimals=2),
+         "delta": pct_change(tacos_val, tacos_val_ly) if tacos_val and tacos_val_ly else None,
+         "delta_is_good_when_positive": False},
+        {"label": "ASP / Discount % / UTP",
+         "value": "Not wired up yet",
+         "delta": None},
+    ]
+    compact_kpi_table(rows)
 
 
 for name, meta in VERTICALS.items():
