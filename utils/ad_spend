@@ -1,20 +1,3 @@
-"""
-Reads daily Meta + Google ad spend from the "Daily Data" tab of the
-KIMIRICA Reporting Data Google Sheet.
-
-The sheet mixes daily rows ("22 June"), weekly rollups ("Week 3 (15th-21st
-August)"), and monthly rollups ("June MTD") in the same column. We only
-want the true daily rows for our day-level KPI calcs.
-
-KEY TRICK: we request UNFORMATTED_VALUE from the Sheets API. Real date
-cells come back as a numeric Excel serial (which encodes the full date,
-including year) - aggregate label rows come back as plain text. So:
-    isinstance(value, (int, float))  ->  real daily date row, keep it
-    isinstance(value, str)           ->  rollup/label row, skip it
-This sidesteps the year-ambiguity you'd get from just reading the
-*displayed* text ("22 June" with no year).
-"""
-
 from datetime import date, timedelta
 
 import gspread
