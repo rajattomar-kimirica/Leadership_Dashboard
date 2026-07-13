@@ -34,8 +34,23 @@ def run_query(sql: str, params: tuple = ()) -> pd.DataFrame:
     """
     Run a parameterised SQL query against BigQuery and return a DataFrame.
     Results are cached for 10 minutes per unique (sql, params) pair.
+
+    `params` must be a tuple of plain, hashable tuples:
+        (name: str, bq_type: str, value)
+    e.g. ("start_date", "DATE", date(2026, 6, 1))
+
+    This is intentionally NOT a tuple of bigquery.ScalarQueryParameter —
+    those objects aren't hashable, and st.cache_data needs to hash every
+    argument to build its cache key. Keeping params as plain primitives
+    means two calls with different dates correctly get different cache
+    entries (as opposed to silently sharing one cached result if you
+    instead disabled hashing on this argument with a leading underscore).
     """
     client = get_bq_client()
-    job_config = bigquery.QueryJobConfig(query_parameters=list(params))
+    query_parameters = [
+        bigquery.ScalarQueryParameter(name, bq_type, value)
+        for name, bq_type, value in params
+    ]
+    job_config = bigquery.QueryJobConfig(query_parameters=query_parameters)
     df = client.query(sql, job_config=job_config).to_dataframe()
     return df
