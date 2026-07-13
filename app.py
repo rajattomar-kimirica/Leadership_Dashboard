@@ -18,13 +18,19 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Kimirica | Leadership Dashboard",
-    page_icon="Kimirica",
+    page_icon="assets/logo.png",  # browser tab favicon — actual logo works here
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 pg = st.navigation([
+    # NOTE: icon= here is validated as emoji-only by Streamlit itself (see
+    # StreamlitAPIException/validate_emoji if you try a real image or URL) —
+    # it's a hard platform limit on this specific nav-list icon slot, not
+    # something fixable in our code. The actual logo shows up instead in
+    # the browser tab (page_icon above) and the sidebar brand block on
+    # each page.
     st.Page("executive_summary.py", title="Executive Summary", icon="📈", default=True),
-    st.Page("website_detail.py", title="Website — Detail", icon="Kimirica.shop"),
+    st.Page("website_detail.py", title="Website — Detail", icon="🌐"),
 ])
 pg.run()
