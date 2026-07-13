@@ -30,6 +30,13 @@ def _fmt_number(value, prefix="", suffix="", decimals=0, compact=False):
         return "—"
 
 
+def format_kpi_value(value, prefix="", suffix="", decimals=0, compact=False) -> str:
+    """Public wrapper around the same formatting kpi_card uses internally —
+    for pages (like the Executive Summary) that build their own compact
+    layouts instead of using kpi_card's st.metric-based card."""
+    return _fmt_number(value, prefix, suffix, decimals, compact=compact)
+
+
 def kpi_card(label: str, value, delta=None, prefix="", suffix="", decimals=0,
              help_text=None, delta_is_good_when_positive=True, compact=False):
     """
@@ -55,6 +62,70 @@ def kpi_card(label: str, value, delta=None, prefix="", suffix="", decimals=0,
         delta=delta_str,
         delta_color="normal" if delta_is_good_when_positive else "inverse",
         help=help_text,
+    )
+
+
+def _delta_html(delta, delta_is_good_when_positive=True, decimals=1) -> str:
+    """Single colored arrow + %, for use inside compact_kpi_table rows."""
+    if delta is None:
+        return "<span style='color:#9CA3AF;'>—</span>"
+    is_up = delta >= 0
+    is_good = is_up if delta_is_good_when_positive else not is_up
+    color = "#2B8A3E" if is_good else "#E03131"
+    arrow = "▲" if is_up else "▼"
+    return f"<span style='color:{color};font-weight:600;'>{arrow} {abs(delta):.{decimals}f}%</span>"
+
+
+def headline_achievement(label: str, actual_str: str, target_str: str, achievement_pct) -> None:
+    """
+    One crisp line for an actual-vs-target headline, e.g.:
+        FY27 Target Achievement (to date)
+        ₹4.13Cr / ₹7.27Cr        56.8% achieved
+        [======progress bar======          ]
+    Use this instead of three separate kpi_card() cards for the same idea.
+    """
+    pct = achievement_pct or 0
+    bar_pct = max(min(pct, 100), 0)
+    st.markdown(
+        f"""
+        <div style='margin-bottom:14px;'>
+            <div style='font-size:0.8rem;color:#6B7280;margin-bottom:2px;'>{label}</div>
+            <div style='font-size:1.5rem;font-weight:700;color:#111827;line-height:1.3;'>
+                {actual_str}
+                <span style='color:#9CA3AF;font-weight:400;'>/</span>
+                {target_str}
+                <span style='color:#2B8A3E;font-weight:600;font-size:1rem;margin-left:12px;'>
+                    {pct:.1f}% achieved
+                </span>
+            </div>
+            <div style='background:#E6E8EC;border-radius:4px;height:6px;margin-top:6px;'>
+                <div style='background:#4C6EF5;width:{bar_pct}%;height:6px;border-radius:4px;'></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def compact_kpi_table(rows: list) -> None:
+    """
+    Renders a crisp, scannable table — one row per metric — instead of a
+    grid of large st.metric cards. Each item in `rows` is a dict:
+        {"label": str, "value": str (already formatted),
+         "delta": float | None, "delta_is_good_when_positive": bool}
+    """
+    body = "".join(
+        f"<tr style='border-bottom:1px solid #E6E8EC;'>"
+        f"<td style='padding:9px 6px;color:#374151;'>{r['label']}</td>"
+        f"<td style='padding:9px 6px;text-align:right;font-weight:600;color:#111827;white-space:nowrap;'>{r['value']}</td>"
+        f"<td style='padding:9px 6px;text-align:right;width:100px;white-space:nowrap;'>"
+        f"{_delta_html(r.get('delta'), r.get('delta_is_good_when_positive', True))}</td>"
+        f"</tr>"
+        for r in rows
+    )
+    st.markdown(
+        f"<table style='width:100%;border-collapse:collapse;font-size:0.95rem;'>{body}</table>",
+        unsafe_allow_html=True,
     )
 
 
