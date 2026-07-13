@@ -3,22 +3,43 @@
 import streamlit as st
 
 
-def _fmt_number(value, prefix="", suffix="", decimals=0):
+def _indian_compact(value: float) -> str:
+    """
+    Abbreviate large rupee amounts using Indian numbering: L = Lakh (1,00,000),
+    Cr = Crore (1,00,00,000). Keeps KPI cards from truncating long numbers.
+    """
+    sign = "-" if value < 0 else ""
+    abs_v = abs(value)
+    if abs_v >= 1_00_00_000:
+        return f"{sign}{abs_v / 1_00_00_000:.2f}Cr"
+    if abs_v >= 1_00_000:
+        return f"{sign}{abs_v / 1_00_000:.2f}L"
+    if abs_v >= 1_000:
+        return f"{sign}{abs_v / 1_000:.1f}K"
+    return f"{sign}{abs_v:,.0f}"
+
+
+def _fmt_number(value, prefix="", suffix="", decimals=0, compact=False):
     if value is None:
         return "—"
     try:
+        if compact:
+            return f"{prefix}{_indian_compact(value)}{suffix}"
         return f"{prefix}{value:,.{decimals}f}{suffix}"
     except (TypeError, ValueError):
         return "—"
 
 
 def kpi_card(label: str, value, delta=None, prefix="", suffix="", decimals=0,
-             help_text=None, delta_is_good_when_positive=True):
+             help_text=None, delta_is_good_when_positive=True, compact=False):
     """
     Render a single KPI in a card with optional delta (vs previous period).
     delta: numeric % change, or None to hide.
+    compact: if True, abbreviates large currency values as L (Lakh) / Cr
+        (Crore) instead of the full number with commas — use this for big
+        revenue-style figures that would otherwise overflow the card.
     """
-    formatted_value = _fmt_number(value, prefix, suffix, decimals)
+    formatted_value = _fmt_number(value, prefix, suffix, decimals, compact=compact)
 
     delta_str = None
     if delta is not None:
