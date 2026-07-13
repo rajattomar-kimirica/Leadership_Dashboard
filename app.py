@@ -31,6 +31,6 @@ pg = st.navigation([
     # the browser tab (page_icon above) and the sidebar brand block on
     # each page.
     st.Page("executive_summary.py", title="Executive Summary", icon="📈", default=True),
-    st.Page("website_detail.py", title="Website — Detail", icon="🌐"),
+    st.Page("website_detail.py", title="Vertical Detail", icon="📋"),
 ])
 pg.run()
