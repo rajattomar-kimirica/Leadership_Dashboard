@@ -1,13 +1,16 @@
 """
 SQL query builders for the Website vertical.
-
 Every function returns (sql_string, bq_params) ready to hand to
 utils.bigquery_client.run_query(). Keeping queries here (not inline in the
 Streamlit page) makes them independently testable and easy to reuse across
 verticals later.
-"""
 
-from google.cloud import bigquery
+NOTE: bq_params is a tuple of plain (name, bq_type, value) tuples, NOT
+bigquery.ScalarQueryParameter objects — run_query() builds the real
+ScalarQueryParameter objects internally. Plain tuples stay hashable, which
+st.cache_data needs to correctly cache per date range (see bigquery_client.py
+for why this matters).
+"""
 from config import ORDERS_TABLE, TARGETS_TABLE, GA4_TABLE, WEBSITE_ORDER_CHANNEL_VALUES, \
     WEBSITE_TARGET_CHANNEL_NAME, REVENUE_COLUMN
 
@@ -56,8 +59,8 @@ def orders_summary_sql(start_date, end_date):
     ORDER BY order_date
     """
     params = (
-        bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
-        bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
+        ("start_date", "DATE", start_date),
+        ("end_date", "DATE", end_date),
     )
     return sql, params
 
@@ -78,9 +81,9 @@ def targets_sql(start_date, end_date):
     ORDER BY sales_date
     """
     params = (
-        bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
-        bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
-        bigquery.ScalarQueryParameter("channel", "STRING", WEBSITE_TARGET_CHANNEL_NAME),
+        ("start_date", "DATE", start_date),
+        ("end_date", "DATE", end_date),
+        ("channel", "STRING", WEBSITE_TARGET_CHANNEL_NAME),
     )
     return sql, params
 
@@ -100,8 +103,8 @@ def retention_sql(start_date, end_date):
       AND {_channel_filter_clause()}
     """
     params = (
-        bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
-        bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
+        ("start_date", "DATE", start_date),
+        ("end_date", "DATE", end_date),
     )
     return sql, params
 
@@ -128,8 +131,8 @@ def ga4_traffic_sql(start_date, end_date):
     ORDER BY date
     """
     params = (
-        bigquery.ScalarQueryParameter("start_date", "DATE", start_date),
-        bigquery.ScalarQueryParameter("end_date", "DATE", end_date),
+        ("start_date", "DATE", start_date),
+        ("end_date", "DATE", end_date),
     )
     return sql, params
 
