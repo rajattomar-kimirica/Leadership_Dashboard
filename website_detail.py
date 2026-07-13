@@ -66,10 +66,12 @@ with st.sidebar:
     st.image("assets/logo.png", width=110)
     st.caption("Leadership KPI Dashboard")
 
-    # This page is dedicated to the Website vertical (see the page nav in
-    # the sidebar for switching pages/verticals) — no need to also ask via
-    # a dropdown here, which was redundant now that routing handles it.
-    vertical = "Website"
+    # One page for every vertical's detail view, selected via dropdown —
+    # rather than adding a new top-level nav page each time a vertical is
+    # added (which doesn't scale once there are several). Only "Website"
+    # has real data-fetch logic wired up below; add branches as more
+    # verticals go live (see the TODO further down).
+    vertical = st.selectbox("Vertical", options=list(VERTICALS.keys()), index=0)
 
     st.divider()
     st.subheader("Date range")
@@ -150,6 +152,11 @@ with st.sidebar:
             f"Ad spend {CURRENCY_SYMBOL} (comparison period)", min_value=0.0, value=0.0, step=1000.0)
 
 
+if vertical != "Website":
+    st.title(f"{VERTICALS[vertical]['icon']} {vertical} — Leadership KPIs")
+    st.info(f"{vertical} isn't wired up on this page yet — coming soon.")
+    st.stop()
+
 # ---------------------------------------------------------------------------
 # Data fetch
 # ---------------------------------------------------------------------------
@@ -174,6 +181,11 @@ except Exception as e:
 # ---------------------------------------------------------------------------
 st.title(f"{VERTICALS[vertical]['icon']} {vertical} — Leadership KPIs")
 st.caption(f"{start_date.strftime('%d %b %Y')} – {end_date.strftime('%d %b %Y')}")
+st.caption(
+    "💡 Revenue, AOV, and related figures below are currently calculated on "
+    "**MRP (list price)**, not net/discounted revenue — see `config.py: "
+    "REVENUE_COLUMN`."
+)
 
 if data_error:
     st.error(
