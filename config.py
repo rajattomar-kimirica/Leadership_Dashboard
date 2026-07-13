@@ -110,7 +110,7 @@ VERTICALS = {
     # "B2B": {"icon": "🤝", "status": "coming_soon"},
 }
 
-CURRENCY_SYMBOL = "₹""
+CURRENCY_SYMBOL = "₹"
 
 # Retention definition: customers in the selected period whose lifetime_orders > 1
 # (i.e. this wasn't their first order). Alternative cohort-based logic can be
