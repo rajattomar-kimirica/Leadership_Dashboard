@@ -30,6 +30,11 @@ st.set_page_config(
 
 # ---------------------------------------------------------------------------
 # Light styling
+# NOTE: card background is deliberately light regardless of the viewer's
+# Streamlit theme (light/dark), so every text color inside the card is
+# force-set here too — otherwise dark-theme users get near-invisible white
+# text on a light card. font-size + overflow-wrap on the value keep long
+# numbers (e.g. full-rupee revenue figures) from being clipped/truncated.
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
@@ -39,7 +44,24 @@ st.markdown("""
         border-radius: 12px;
         padding: 14px 16px 10px 16px;
     }
-    div[data-testid="stMetricLabel"] { font-weight: 600; opacity: 0.75; }
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] * {
+        font-weight: 600;
+        opacity: 0.75;
+        color: #1F2937 !important;
+    }
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] * {
+        color: #111827 !important;
+        font-size: 1.6rem !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        line-height: 1.2 !important;
+    }
+    div[data-testid="stMetricDelta"],
+    div[data-testid="stMetricDelta"] * {
+        font-size: 0.85rem !important;
+    }
     .block-container { padding-top: 1.8rem; }
 </style>
 """, unsafe_allow_html=True)
@@ -48,7 +70,15 @@ st.markdown("""
 # Sidebar — vertical, date range, manual inputs
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.title("📊 Kimirica")
+    st.markdown(
+        """
+        <div style='font-size:1.5rem; font-weight:700; letter-spacing:0.14em;
+                    color:#111827; margin-bottom:0;'>
+            KIMIRICA
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.caption("Leadership KPI Dashboard")
 
     vertical = st.selectbox("Vertical", options=list(VERTICALS.keys()), index=0)
@@ -79,10 +109,34 @@ with st.sidebar:
         start_date = c1.date_input("Start", today - timedelta(days=30))
         end_date = c2.date_input("End", today)
 
-    # comparison window = immediately preceding period of equal length
+    st.divider()
+    st.subheader("Compare to")
+
+    compare_mode = st.radio(
+        "Comparison period",
+        ["Previous period (same length)", "Same period last year", "Custom range"],
+        index=0,
+    )
+
     period_len = (end_date - start_date).days + 1
-    prev_start = start_date - timedelta(days=period_len)
-    prev_end = start_date - timedelta(days=1)
+    if compare_mode == "Previous period (same length)":
+        prev_start = start_date - timedelta(days=period_len)
+        prev_end = start_date - timedelta(days=1)
+    elif compare_mode == "Same period last year":
+        try:
+            prev_start = start_date.replace(year=start_date.year - 1)
+            prev_end = end_date.replace(year=end_date.year - 1)
+        except ValueError:
+            # Feb 29 with no matching date the year before — fall back to
+            # a straight 365-day offset instead of crashing.
+            prev_start = start_date - timedelta(days=365)
+            prev_end = end_date - timedelta(days=365)
+    else:
+        cc1, cc2 = st.columns(2)
+        prev_start = cc1.date_input(
+            "Compare start", start_date - timedelta(days=period_len), key="compare_start")
+        prev_end = cc2.date_input(
+            "Compare end", start_date - timedelta(days=1), key="compare_end")
 
     st.caption(f"Comparing to: {prev_start} → {prev_end}")
 
@@ -208,10 +262,10 @@ tacos_val_prev = tacos(ad_spend_prev, prev["net_revenue"]) if ad_spend_prev else
 section_header("Revenue & Growth")
 r1c1, r1c2, r1c3, r1c4 = st.columns(4)
 with r1c1:
-    kpi_card("Revenue (Actual)", tgt["actual_revenue"], prefix=CURRENCY_SYMBOL,
+    kpi_card("Revenue (Actual)", tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True,
              delta=pct_change(tgt["actual_revenue"], targets_prev_df["revenue"].sum() if not targets_prev_df.empty else 0))
 with r1c2:
-    kpi_card("Revenue Target", tgt["target_revenue"], prefix=CURRENCY_SYMBOL)
+    kpi_card("Revenue Target", tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True)
 with r1c3:
     achievement = tgt["achievement_pct"]
     st.metric("Target Achievement %", f"{achievement:.1f}%")
