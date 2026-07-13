@@ -55,14 +55,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <div style='font-size:1.5rem; font-weight:700; letter-spacing:0.14em; color:#111827;'>
-        KIMIRICA
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.sidebar:
+    st.image("assets/logo.png", width=110)
+
 st.title("Executive Summary")
 
 today = date.today()
