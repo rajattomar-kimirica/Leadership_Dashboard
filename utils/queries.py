@@ -33,7 +33,7 @@ def orders_summary_sql(start_date, end_date):
             order_date,
             customer_id,
             new_vs_returning,
-            ANY_VALUE({REVENUE_COLUMN}) AS order_net_revenue,
+            SUM({REVENUE_COLUMN}) AS order_net_revenue,
             ANY_VALUE(total_discounts) AS order_total_discounts,
             ANY_VALUE(is_cancelled) AS is_cancelled,
             ANY_VALUE(is_refunded) AS is_refunded
