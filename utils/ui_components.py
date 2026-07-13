@@ -107,7 +107,7 @@ def headline_achievement(label: str, actual_str: str, target_str: str, achieveme
     )
 
 
-def compact_kpi_table(rows: list) -> None:
+def compact_kpi_table(rows: list, value_col_label: str = "This Period", delta_col_label: str = "vs LY") -> None:
     """
     Renders a crisp, scannable table — one row per metric — instead of a
     grid of large st.metric cards. Each item in `rows` is a dict:
@@ -115,16 +115,27 @@ def compact_kpi_table(rows: list) -> None:
          "delta": float | None, "delta_is_good_when_positive": bool}
     """
     body = "".join(
-        f"<tr style='border-bottom:1px solid #E6E8EC;'>"
-        f"<td style='padding:9px 6px;color:#374151;'>{r['label']}</td>"
-        f"<td style='padding:9px 6px;text-align:right;font-weight:600;color:#111827;white-space:nowrap;'>{r['value']}</td>"
-        f"<td style='padding:9px 6px;text-align:right;width:100px;white-space:nowrap;'>"
+        f"<tr style='border-bottom:1px solid #EEF0F2;"
+        f"background:{'#FAFBFC' if i % 2 else 'transparent'};'>"
+        f"<td style='padding:8px 6px;color:#374151;'>{r['label']}</td>"
+        f"<td style='padding:8px 6px;text-align:right;font-weight:600;color:#111827;white-space:nowrap;'>{r['value']}</td>"
+        f"<td style='padding:8px 6px;text-align:right;width:100px;white-space:nowrap;'>"
         f"{_delta_html(r.get('delta'), r.get('delta_is_good_when_positive', True))}</td>"
         f"</tr>"
-        for r in rows
+        for i, r in enumerate(rows)
+    )
+    header = (
+        "<tr style='border-bottom:2px solid #E6E8EC;'>"
+        "<th style='padding:4px 6px;text-align:left;font-size:0.72rem;"
+        "text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;font-weight:600;'>Metric</th>"
+        f"<th style='padding:4px 6px;text-align:right;font-size:0.72rem;"
+        f"text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;font-weight:600;'>{value_col_label}</th>"
+        f"<th style='padding:4px 6px;text-align:right;font-size:0.72rem;"
+        f"text-transform:uppercase;letter-spacing:0.05em;color:#9CA3AF;font-weight:600;'>{delta_col_label}</th>"
+        "</tr>"
     )
     st.markdown(
-        f"<table style='width:100%;border-collapse:collapse;font-size:0.95rem;'>{body}</table>",
+        f"<table style='width:100%;border-collapse:collapse;font-size:0.95rem;'>{header}{body}</table>",
         unsafe_allow_html=True,
     )
 
