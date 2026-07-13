@@ -63,15 +63,7 @@ st.markdown("""
 # Sidebar — vertical, date range, manual inputs
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown(
-        """
-        <div style='font-size:1.5rem; font-weight:700; letter-spacing:0.14em;
-                    color:#111827; margin-bottom:0;'>
-            KIMIRICA
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.image("assets/logo.png", width=110)
     st.caption("Leadership KPI Dashboard")
 
     # This page is dedicated to the Website vertical (see the page nav in
