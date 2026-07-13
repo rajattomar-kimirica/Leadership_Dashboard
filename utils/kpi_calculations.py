@@ -99,3 +99,17 @@ def summarize_ga4(df: pd.DataFrame) -> dict:
         "sessions_checkout": int(df["sessions_checkout"].sum()),
         "sessions_purchased": int(df["sessions_purchased"].sum()),
     }
+
+
+def summarize_channel_sales(df: pd.DataFrame) -> dict:
+    """
+    Sums channel_sales_revenue_sql() output (Online E-commerce, Secondary
+    Sales) into period totals. Revenue here is Secondary Sales only —
+    Primary Sales will be added once that table exists.
+    """
+    if df.empty:
+        return {"revenue": 0, "quantity": 0}
+    return {
+        "revenue": df["revenue"].sum(),
+        "quantity": df["quantity"].sum(),
+    }
