@@ -41,10 +41,13 @@ def kpi_card(label: str, value, delta=None, prefix="", suffix="", decimals=0,
     """
     formatted_value = _fmt_number(value, prefix, suffix, decimals, compact=compact)
 
-    delta_str = None
-    if delta is not None:
-        arrow = "▲" if delta >= 0 else "▼"
-        delta_str = f"{arrow} {abs(delta):.1f}%"
+    # Pass a signed number string ("+5.1%" / "-5.1%"), not our own arrow glyph.
+    # st.metric draws its own up/down arrow based on the leading sign — if we
+    # prepend our own ▲/▼ character instead, Streamlit can't read it as
+    # negative and always draws its own arrow pointing up, on top of our
+    # (possibly contradicting) glyph. This way there's exactly one arrow,
+    # and it's correct.
+    delta_str = f"{delta:+.1f}%" if delta is not None else None
 
     st.metric(
         label=label,
