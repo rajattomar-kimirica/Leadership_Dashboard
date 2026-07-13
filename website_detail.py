@@ -21,13 +21,6 @@ from utils.kpi_calculations import (
 from utils.ui_components import kpi_card, section_header, placeholder_note
 from utils.ad_spend import load_daily_ad_spend, total_spend
 
-st.set_page_config(
-    page_title="Kimirica | Leadership Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
 # ---------------------------------------------------------------------------
 # Light styling
 # NOTE: card background is deliberately light regardless of the viewer's
