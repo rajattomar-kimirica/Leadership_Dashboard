@@ -44,6 +44,11 @@ st.caption(
     f"{this_fy_label} to date: {fy_start_d.strftime('%d %b %Y')} – {fy_end_d.strftime('%d %b %Y')}  |  "
     f"vs same period last year: {fy_ly_start.strftime('%d %b %Y')} – {fy_ly_end.strftime('%d %b %Y')}"
 )
+st.caption(
+    "💡 Revenue, AOV, and related figures below are currently calculated on "
+    "**MRP (list price)**, not net/discounted revenue — see `config.py: "
+    "REVENUE_COLUMN`."
+)
 
 
 def load_website_summary() -> dict:
@@ -77,89 +82,97 @@ VERTICAL_LOADERS = {
 
 def render_vertical_block(vertical_name: str, meta: dict) -> None:
     icon = meta.get("icon", "")
-    st.divider()
-    st.header(f"{icon} {vertical_name}")
 
-    if meta.get("status") != "live" or vertical_name not in VERTICAL_LOADERS:
-        st.info(f"{vertical_name} isn't wired up on this page yet — coming soon.")
-        return
+    with st.container(border=True):
+        st.markdown(
+            f"<div style='font-size:1.3rem;font-weight:700;color:#111827;margin-bottom:10px;'>"
+            f"{icon} &nbsp;{vertical_name}</div>",
+            unsafe_allow_html=True,
+        )
 
-    try:
-        data = VERTICAL_LOADERS[vertical_name]()
-    except Exception as e:
-        st.error(f"Couldn't load {vertical_name} data: {e}")
-        return
+        if meta.get("status") != "live" or vertical_name not in VERTICAL_LOADERS:
+            st.info(f"{vertical_name} isn't wired up on this page yet — coming soon.")
+            return
 
-    # -----------------------------------------------------------------
-    # Crisp headline: FY-to-date revenue, achieved vs target
-    # -----------------------------------------------------------------
-    tgt = targets_summary(data["targets"])
-    headline_achievement(
-        f"{this_fy_label} Revenue — Achieved vs Target (to date)",
-        format_kpi_value(tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        format_kpi_value(tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        tgt["achievement_pct"],
-    )
+        try:
+            data = VERTICAL_LOADERS[vertical_name]()
+        except Exception as e:
+            st.error(f"Couldn't load {vertical_name} data: {e}")
+            return
 
-    # -----------------------------------------------------------------
-    # Everything else: one crisp table, one row per metric — all FY-to-date
-    # vs the same FY-to-date window last year
-    # -----------------------------------------------------------------
-    cur = summarize_orders(data["orders"])
-    prev = summarize_orders(data["orders_ly"])
-    ret_pct = retention_rate(data["ret"])
-    ret_pct_ly = retention_rate(data["ret_ly"])
-    ga4_cur = summarize_ga4(data["ga4"])
-    ga4_ly = summarize_ga4(data["ga4_ly"])
-    ad_spend_cur = total_spend(data["spend"])
-    ad_spend_ly = total_spend(data["spend_ly"])
+        # -------------------------------------------------------------
+        # Crisp headline: FY-to-date revenue, achieved vs target
+        # -------------------------------------------------------------
+        tgt = targets_summary(data["targets"])
+        headline_achievement(
+            f"{this_fy_label} Revenue — Achieved vs Target (to date)",
+            format_kpi_value(tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+            format_kpi_value(tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+            tgt["achievement_pct"],
+        )
+        st.markdown("<hr style='border:none;border-top:1px solid #EEF0F2;margin:4px 0 12px 0;'>",
+                    unsafe_allow_html=True)
 
-    conv_pct = conversion_rate(cur["orders"], ga4_cur["sessions"]) if ga4_cur["sessions"] else None
-    conv_pct_ly = conversion_rate(prev["orders"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None
-    cac_val = cac(ad_spend_cur, cur["new_customers"]) if ad_spend_cur else None
-    cac_val_ly = cac(ad_spend_ly, prev["new_customers"]) if ad_spend_ly else None
-    roas_val = roas(cur["net_revenue"], ad_spend_cur) if ad_spend_cur else None
-    roas_val_ly = roas(prev["net_revenue"], ad_spend_ly) if ad_spend_ly else None
-    tacos_val = tacos(ad_spend_cur, cur["net_revenue"]) if ad_spend_cur else None
-    tacos_val_ly = tacos(ad_spend_ly, prev["net_revenue"]) if ad_spend_ly else None
+        # -------------------------------------------------------------
+        # Everything else: one crisp table, one row per metric — all
+        # FY-to-date vs the same FY-to-date window last year
+        # -------------------------------------------------------------
+        cur = summarize_orders(data["orders"])
+        prev = summarize_orders(data["orders_ly"])
+        ret_pct = retention_rate(data["ret"])
+        ret_pct_ly = retention_rate(data["ret_ly"])
+        ga4_cur = summarize_ga4(data["ga4"])
+        ga4_ly = summarize_ga4(data["ga4_ly"])
+        ad_spend_cur = total_spend(data["spend"])
+        ad_spend_ly = total_spend(data["spend_ly"])
 
-    growth = pct_change(cur["net_revenue"], prev["net_revenue"])
-    rows = [
-        {"label": "Growth % (FY YTD vs LY)",
-         "value": format_kpi_value(growth, suffix="%", decimals=1),
-         "delta": None},
-        {"label": "Traffic (Sessions)",
-         "value": format_kpi_value(ga4_cur["sessions"] or None),
-         "delta": pct_change(ga4_cur["sessions"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None},
-        {"label": "Conversion %",
-         "value": format_kpi_value(conv_pct, suffix="%", decimals=2),
-         "delta": pct_change(conv_pct, conv_pct_ly) if conv_pct and conv_pct_ly else None},
-        {"label": "AOV",
-         "value": format_kpi_value(cur["aov"], prefix=CURRENCY_SYMBOL, decimals=0),
-         "delta": pct_change(cur["aov"], prev["aov"])},
-        {"label": "New Customers",
-         "value": format_kpi_value(cur["new_customers"]),
-         "delta": pct_change(cur["new_customers"], prev["new_customers"])},
-        {"label": "Retention %",
-         "value": format_kpi_value(ret_pct, suffix="%", decimals=1),
-         "delta": pct_change(ret_pct, ret_pct_ly)},
-        {"label": "CAC",
-         "value": format_kpi_value(cac_val, prefix=CURRENCY_SYMBOL, decimals=0),
-         "delta": pct_change(cac_val, cac_val_ly) if cac_val and cac_val_ly else None,
-         "delta_is_good_when_positive": False},
-        {"label": "ROAS",
-         "value": format_kpi_value(roas_val, suffix="x", decimals=2),
-         "delta": pct_change(roas_val, roas_val_ly) if roas_val and roas_val_ly else None},
-        {"label": "Overall TACOS",
-         "value": format_kpi_value(tacos_val, suffix="%", decimals=2),
-         "delta": pct_change(tacos_val, tacos_val_ly) if tacos_val and tacos_val_ly else None,
-         "delta_is_good_when_positive": False},
-        {"label": "ASP / Discount % / UTP",
-         "value": "Not wired up yet",
-         "delta": None},
-    ]
-    compact_kpi_table(rows)
+        conv_pct = conversion_rate(cur["orders"], ga4_cur["sessions"]) if ga4_cur["sessions"] else None
+        conv_pct_ly = conversion_rate(prev["orders"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None
+        cac_val = cac(ad_spend_cur, cur["new_customers"]) if ad_spend_cur else None
+        cac_val_ly = cac(ad_spend_ly, prev["new_customers"]) if ad_spend_ly else None
+        roas_val = roas(cur["net_revenue"], ad_spend_cur) if ad_spend_cur else None
+        roas_val_ly = roas(prev["net_revenue"], ad_spend_ly) if ad_spend_ly else None
+        tacos_val = tacos(ad_spend_cur, cur["net_revenue"]) if ad_spend_cur else None
+        tacos_val_ly = tacos(ad_spend_ly, prev["net_revenue"]) if ad_spend_ly else None
+
+        growth = pct_change(cur["net_revenue"], prev["net_revenue"])
+        rows = [
+            {"label": "Growth % (FY YTD vs LY)",
+             "value": format_kpi_value(growth, suffix="%", decimals=1),
+             "delta": None},
+            {"label": "Traffic (Sessions)",
+             "value": format_kpi_value(ga4_cur["sessions"] or None),
+             "delta": pct_change(ga4_cur["sessions"], ga4_ly["sessions"]) if ga4_ly["sessions"] else None},
+            {"label": "Conversion %",
+             "value": format_kpi_value(conv_pct, suffix="%", decimals=2),
+             "delta": pct_change(conv_pct, conv_pct_ly) if conv_pct and conv_pct_ly else None},
+            {"label": "AOV",
+             "value": format_kpi_value(cur["aov"], prefix=CURRENCY_SYMBOL, decimals=0),
+             "delta": pct_change(cur["aov"], prev["aov"])},
+            {"label": "New Customers",
+             "value": format_kpi_value(cur["new_customers"]),
+             "delta": pct_change(cur["new_customers"], prev["new_customers"])},
+            {"label": "Retention %",
+             "value": format_kpi_value(ret_pct, suffix="%", decimals=1),
+             "delta": pct_change(ret_pct, ret_pct_ly)},
+            {"label": "CAC",
+             "value": format_kpi_value(cac_val, prefix=CURRENCY_SYMBOL, decimals=0),
+             "delta": pct_change(cac_val, cac_val_ly) if cac_val and cac_val_ly else None,
+             "delta_is_good_when_positive": False},
+            {"label": "ROAS",
+             "value": format_kpi_value(roas_val, suffix="x", decimals=2),
+             "delta": pct_change(roas_val, roas_val_ly) if roas_val and roas_val_ly else None},
+            {"label": "Overall TACOS",
+             "value": format_kpi_value(tacos_val, suffix="%", decimals=2),
+             "delta": pct_change(tacos_val, tacos_val_ly) if tacos_val and tacos_val_ly else None,
+             "delta_is_good_when_positive": False},
+            {"label": "ASP / Discount % / UTP",
+             "value": "Not wired up yet",
+             "delta": None},
+        ]
+        compact_kpi_table(rows, value_col_label=f"{this_fy_label} YTD", delta_col_label="vs LY")
 
 
 for name, meta in VERTICALS.items():
     render_vertical_block(name, meta)
+    st.write("")  # a little breathing room between vertical cards
