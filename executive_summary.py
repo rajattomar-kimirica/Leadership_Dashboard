@@ -3,11 +3,11 @@ Executive Summary
 ==================
 Single-page, all-verticals overview for leadership.
 
-Unlike the per-vertical detail page (app.py), nothing here is user-selectable:
-every metric is MTD (month-to-date) vs the same calendar days one year
-earlier — a fixed comparison so every vertical is judged on the same basis.
-Each vertical also gets a headline "FY-to-date target achievement" card,
-covering April 1 (start of FY) through today.
+Every metric on this page is Financial-Year-to-date (April 1 through today)
+vs the same FY-to-date window one year earlier — one consistent basis for
+every number, not a mix of MTD and FY. Nothing here is user-selectable
+(unlike the per-vertical detail page), so every vertical is judged the
+same way.
 
 Adding a new vertical: write a loader function the same shape as
 load_website_summary() below, register it in VERTICAL_LOADERS, and add the
@@ -28,7 +28,7 @@ from utils.kpi_calculations import (
 )
 from utils.ui_components import format_kpi_value, headline_achievement, compact_kpi_table
 from utils.ad_spend import load_daily_ad_spend, total_spend
-from utils.date_utils import mtd_window, same_period_last_year, fy_mtd_window, fy_label
+from utils.date_utils import same_period_last_year, fy_mtd_window, fy_label
 
 with st.sidebar:
     st.image("assets/logo.png", width=110)
@@ -36,39 +36,35 @@ with st.sidebar:
 st.title("Executive Summary")
 
 today = date.today()
-mtd_start, mtd_end = mtd_window(today)
-ly_start, ly_end = same_period_last_year(mtd_start, mtd_end)
 fy_start_d, fy_end_d = fy_mtd_window(today)
+fy_ly_start, fy_ly_end = same_period_last_year(fy_start_d, fy_end_d)
 this_fy_label = fy_label(today)
 
 st.caption(
-    f"MTD: {mtd_start.strftime('%d %b %Y')} – {mtd_end.strftime('%d %b %Y')}  |  "
-    f"vs same period last year: {ly_start.strftime('%d %b %Y')} – {ly_end.strftime('%d %b %Y')}  |  "
-    f"{this_fy_label} to date: {fy_start_d.strftime('%d %b %Y')} – {fy_end_d.strftime('%d %b %Y')}"
+    f"{this_fy_label} to date: {fy_start_d.strftime('%d %b %Y')} – {fy_end_d.strftime('%d %b %Y')}  |  "
+    f"vs same period last year: {fy_ly_start.strftime('%d %b %Y')} – {fy_ly_end.strftime('%d %b %Y')}"
 )
 
 
 def load_website_summary() -> dict:
     """
-    Pulls everything needed for the Website vertical's block: MTD vs
-    MTD-last-year for the headline KPIs, plus FY-to-date targets.
-    Mirrors app.py's data-fetch logic but with fixed date windows instead
-    of sidebar-driven ones, and no manual-override inputs (this page is
-    read-only — if a source fails, that vertical's block shows an error
-    instead of falling back to a manual entry).
+    Pulls everything needed for the Website vertical's block: FY-to-date vs
+    FY-to-date-last-year for every headline metric. Mirrors app.py's
+    data-fetch logic but with fixed date windows instead of sidebar-driven
+    ones, and no manual-override inputs (this page is read-only — if a
+    source fails, that vertical's block shows an error instead of falling
+    back to a manual entry).
     """
     return {
-        "orders": run_query(*orders_summary_sql(mtd_start, mtd_end)),
-        "orders_ly": run_query(*orders_summary_sql(ly_start, ly_end)),
-        "targets": run_query(*targets_sql(mtd_start, mtd_end)),
-        "targets_ly": run_query(*targets_sql(ly_start, ly_end)),
-        "ret": run_query(*retention_sql(mtd_start, mtd_end)),
-        "ret_ly": run_query(*retention_sql(ly_start, ly_end)),
-        "ga4": run_query(*ga4_traffic_sql(mtd_start, mtd_end)),
-        "ga4_ly": run_query(*ga4_traffic_sql(ly_start, ly_end)),
-        "spend": load_daily_ad_spend(mtd_start, mtd_end),
-        "spend_ly": load_daily_ad_spend(ly_start, ly_end),
-        "fy_targets": run_query(*targets_sql(fy_start_d, fy_end_d)),
+        "orders": run_query(*orders_summary_sql(fy_start_d, fy_end_d)),
+        "orders_ly": run_query(*orders_summary_sql(fy_ly_start, fy_ly_end)),
+        "targets": run_query(*targets_sql(fy_start_d, fy_end_d)),
+        "ret": run_query(*retention_sql(fy_start_d, fy_end_d)),
+        "ret_ly": run_query(*retention_sql(fy_ly_start, fy_ly_end)),
+        "ga4": run_query(*ga4_traffic_sql(fy_start_d, fy_end_d)),
+        "ga4_ly": run_query(*ga4_traffic_sql(fy_ly_start, fy_ly_end)),
+        "spend": load_daily_ad_spend(fy_start_d, fy_end_d),
+        "spend_ly": load_daily_ad_spend(fy_ly_start, fy_ly_end),
     }
 
 
@@ -95,19 +91,22 @@ def render_vertical_block(vertical_name: str, meta: dict) -> None:
         return
 
     # -----------------------------------------------------------------
-    # Crisp headline: FY-to-date and MTD actual-vs-target, one line each
+    # Crisp headline: FY-to-date revenue, achieved vs target
     # -----------------------------------------------------------------
-    fy_tgt = targets_summary(data["fy_targets"])
+    tgt = targets_summary(data["targets"])
     headline_achievement(
         f"{this_fy_label} Revenue — Achieved vs Target (to date)",
-        format_kpi_value(fy_tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        format_kpi_value(fy_tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        fy_tgt["achievement_pct"],
+        format_kpi_value(tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        format_kpi_value(tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
+        tgt["achievement_pct"],
     )
 
+    # -----------------------------------------------------------------
+    # Everything else: one crisp table, one row per metric — all FY-to-date
+    # vs the same FY-to-date window last year
+    # -----------------------------------------------------------------
     cur = summarize_orders(data["orders"])
     prev = summarize_orders(data["orders_ly"])
-    tgt = targets_summary(data["targets"])
     ret_pct = retention_rate(data["ret"])
     ret_pct_ly = retention_rate(data["ret_ly"])
     ga4_cur = summarize_ga4(data["ga4"])
@@ -124,19 +123,9 @@ def render_vertical_block(vertical_name: str, meta: dict) -> None:
     tacos_val = tacos(ad_spend_cur, cur["net_revenue"]) if ad_spend_cur else None
     tacos_val_ly = tacos(ad_spend_ly, prev["net_revenue"]) if ad_spend_ly else None
 
-    headline_achievement(
-        "MTD Revenue — Achieved vs Target",
-        format_kpi_value(tgt["actual_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        format_kpi_value(tgt["target_revenue"], prefix=CURRENCY_SYMBOL, compact=True),
-        tgt["achievement_pct"],
-    )
-
-    # -----------------------------------------------------------------
-    # Everything else: one crisp table, one row per metric, all vs LY
-    # -----------------------------------------------------------------
     growth = pct_change(cur["net_revenue"], prev["net_revenue"])
     rows = [
-        {"label": "Growth % (YoY)",
+        {"label": "Growth % (FY YTD vs LY)",
          "value": format_kpi_value(growth, suffix="%", decimals=1),
          "delta": None},
         {"label": "Traffic (Sessions)",
