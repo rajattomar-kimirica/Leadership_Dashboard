@@ -280,13 +280,13 @@ with r1c4:
 section_header("Acquisition & Conversion")
 r2c1, r2c2, r2c3, r2c4 = st.columns(4)
 with r2c1:
-    placeholder_note(traffic_source_label, color="#D3F9D8" if traffic_source_label.startswith("LIVE") else "#FFF3CD",
-                      text_color="#2B8A3E" if traffic_source_label.startswith("LIVE") else "#856404")
+    if not traffic_source_label.startswith("LIVE"):
+        placeholder_note(traffic_source_label, color="#FFF3CD", text_color="#856404")
     kpi_card("Traffic (Sessions)", sessions_current or None,
              delta=pct_change(sessions_current, sessions_prev) if sessions_prev else None)
 with r2c2:
-    placeholder_note(traffic_source_label, color="#D3F9D8" if traffic_source_label.startswith("LIVE") else "#FFF3CD",
-                      text_color="#2B8A3E" if traffic_source_label.startswith("LIVE") else "#856404")
+    if not traffic_source_label.startswith("LIVE"):
+        placeholder_note(traffic_source_label, color="#FFF3CD", text_color="#856404")
     kpi_card("Conversion %", conv_pct, suffix="%", decimals=2,
              delta=pct_change(conv_pct, conv_pct_prev) if conv_pct and conv_pct_prev else None)
 with r2c3:
@@ -305,19 +305,19 @@ with r3c1:
     kpi_card("Retention %", ret_pct, suffix="%", decimals=1,
              delta=pct_change(ret_pct, ret_pct_prev))
 with r3c2:
-    placeholder_note(spend_source_label, color="#D3F9D8" if spend_source_label.startswith("LIVE") else "#FFF3CD",
-                      text_color="#2B8A3E" if spend_source_label.startswith("LIVE") else "#856404")
+    if not spend_source_label.startswith("LIVE"):
+        placeholder_note(spend_source_label, color="#FFF3CD", text_color="#856404")
     kpi_card("CAC", cac_val, prefix=CURRENCY_SYMBOL, decimals=0,
              delta=pct_change(cac_val, cac_val_prev) if cac_val and cac_val_prev else None,
              delta_is_good_when_positive=False)
 with r3c3:
-    placeholder_note(spend_source_label, color="#D3F9D8" if spend_source_label.startswith("LIVE") else "#FFF3CD",
-                      text_color="#2B8A3E" if spend_source_label.startswith("LIVE") else "#856404")
+    if not spend_source_label.startswith("LIVE"):
+        placeholder_note(spend_source_label, color="#FFF3CD", text_color="#856404")
     kpi_card("ROAS", roas_val, suffix="x", decimals=2,
              delta=pct_change(roas_val, roas_val_prev) if roas_val and roas_val_prev else None)
 with r3c4:
-    placeholder_note(spend_source_label, color="#D3F9D8" if spend_source_label.startswith("LIVE") else "#FFF3CD",
-                      text_color="#2B8A3E" if spend_source_label.startswith("LIVE") else "#856404")
+    if not spend_source_label.startswith("LIVE"):
+        placeholder_note(spend_source_label, color="#FFF3CD", text_color="#856404")
     kpi_card("Overall TACOS", tacos_val, suffix="%", decimals=2,
              delta=pct_change(tacos_val, tacos_val_prev) if tacos_val and tacos_val_prev else None,
              delta_is_good_when_positive=False)
